@@ -97,7 +97,6 @@ public class MapsActivity extends FragmentActivity implements LocationSource, On
             location.setLatitude(point.latitude);
             location.setLongitude(point.longitude);
             location.setAccuracy(100);
-           //  myLocationChangeListener.onMyLocationChange(location);
             mMap.addMarker(new MarkerOptions().position(point));
 
             Log.d("Clic","Tik");
@@ -118,4 +117,5 @@ public class MapsActivity extends FragmentActivity implements LocationSource, On
         super.onResume();
 //        mLocationSource.onResume();
         }
+
 }
