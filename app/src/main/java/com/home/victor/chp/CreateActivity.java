@@ -13,9 +13,11 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
@@ -31,11 +33,12 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 public class CreateActivity extends Activity implements LocationSource, OnMapReadyCallback,View.OnClickListener, GoogleMap.OnMapLongClickListener {
 
-    public Double latint = 0.0;
-    public Double longit = 0.0;
     public GoogleMap mCreateMap;
     public LatLng loc;
+
+    public int id;
     public String name;
+    public int privacy =0;
     public String type;
     public String coment;
 
@@ -63,9 +66,13 @@ public class CreateActivity extends Activity implements LocationSource, OnMapRea
     public static Spinner spinner;
     public String[] data = {"Sport", "Party", "Concert", "Beach", "Walk"};
     private EditText editComent;
+    public Double latint = 0.0;
+    public Double longit = 0.0;
     public Double latitude2 = 0.0;
     public Double longitude2 = 0.0;
     public LatLng point= new LatLng(latitude2,longitude2);
+    private Boolean checkCreateEdit = false;
+    public Switch switchPrivacy;
 
     public void onCreate(Bundle savedInstanceState) {
 
@@ -77,6 +84,32 @@ public class CreateActivity extends Activity implements LocationSource, OnMapRea
                 .findFragmentById(R.id.create_map);
         mapFragment.getMapAsync(this);
 
+        checkCreateEdit = getIntent().getBooleanExtra("checkCreateEditE2",checkCreateEdit);
+
+        id= getIntent().getIntExtra("idE2",0);
+        name = getIntent().getStringExtra("nameE2");
+        type = getIntent().getStringExtra("typeE2");
+        coment = getIntent().getStringExtra("comentE2");
+        privacy =getIntent().getIntExtra("privacyE2",0);
+        year = getIntent().getIntExtra("yearE2", year);
+        month = getIntent().getIntExtra("monthE2",  month);
+        day = getIntent().getIntExtra("dayE2", day);
+        hour = getIntent().getIntExtra("hourE2", hour);
+        minute = getIntent().getIntExtra("minuteE2", minute);
+
+        year2 = getIntent().getIntExtra("year2E2", year2);
+        month2 = getIntent().getIntExtra("month2E2",  month2);
+        day2 = getIntent().getIntExtra("day2E2", day2);
+        hour2 = getIntent().getIntExtra("hour2E2", hour2);
+        minute2 = getIntent().getIntExtra("minute2E2", minute2);
+
+        latint = getIntent().getDoubleExtra("coord1LatE2",  latint);
+        longit  = getIntent().getDoubleExtra("coord1LonE2",  longit);
+
+        latitude2 = getIntent().getDoubleExtra("coord2LatE2", latitude2);
+        longitude2 = getIntent().getDoubleExtra("coord2LonE2", longitude2);
+        point= new LatLng(latitude2,longitude2);
+
         latint = getIntent().getDoubleExtra("coordLat", latint);
         longit = getIntent().getDoubleExtra("coordLon", longit);
         loc = new LatLng(latint, longit);
@@ -86,6 +119,7 @@ public class CreateActivity extends Activity implements LocationSource, OnMapRea
 
         btnEditDate1 = (Button) findViewById(R.id.btnEditDate1);
         btnEditDate1.setOnClickListener(this);
+
 
         btnEditTime1 = (Button) findViewById(R.id. btnEditTime1);
         btnEditTime1.setOnClickListener(this);
@@ -99,19 +133,43 @@ public class CreateActivity extends Activity implements LocationSource, OnMapRea
         editName = (EditText) findViewById(R.id.editName);
 
         editComent = (EditText) findViewById(R.id.editComent);
+        switchPrivacy = (Switch) findViewById(R.id.switchPrivacy);
+
+        switchPrivacy.setChecked(privacy ==1);
+        if (checkCreateEdit) {
+            btnCreate.setText("Save");
+
+            btnEditDate1.setText("Begin date " + new StringBuilder().append(day).append("/")
+                    .append(month).append("/").append(year));
+            btnEditTime1.setText("Begin time " + new StringBuilder().append(hour).append(":")
+                    .append(minute));
+            btnEditDate2.setText("Begin date " + new StringBuilder().append(day2).append("/")
+                    .append(month2).append("/").append(year2));
+            btnEditTime2.setText("Begin time " + new StringBuilder().append(hour2).append(":")
+                    .append(minute2));
+
+        }
+        switchPrivacy.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
 
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    privacy = 1;
+                } else {
+                    privacy = 0;
+                }
+            }
+        }
+        );
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, data);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
         final Spinner spinner = (Spinner) findViewById(R.id.spinner);
         spinner.setAdapter(adapter);
-        // заголовок
         spinner.setPrompt("Event type");
-        // выделяем элемент
         spinner.setSelection(0);
-        // устанавливаем обработчик нажатия
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
             @Override
@@ -132,24 +190,30 @@ public class CreateActivity extends Activity implements LocationSource, OnMapRea
         mCreateMap = googleMap;
         mCreateMap.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 16.0f));
         mCreateMap.addMarker(new MarkerOptions().position(loc));
+        if(checkCreateEdit)
+            mCreateMap.addMarker(new MarkerOptions()
+                    .position(point)
+                    .title(name)
+                    .icon(BitmapDescriptorFactory
+                    .defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
         mCreateMap.setOnMyLocationChangeListener(myLocationChangeListener2);
-        mCreateMap.setOnMapLongClickListener(mLocationSource2);
+        mCreateMap.setOnMapLongClickListener(this);
         UiSettings uiSettings = mCreateMap.getUiSettings();
         uiSettings.setZoomControlsEnabled(true);
         uiSettings.setIndoorLevelPickerEnabled(true);
     }
 
-    public void onMapLongClick(LatLng point) {
+    public void onMapLongClick(LatLng Point) {
         Location location = new Location("LongPressLocationProvider");
-        location.setLatitude(point.latitude);
-        location.setLongitude(point.longitude);
+        location.setLatitude(Point.latitude);
+        location.setLongitude(Point.longitude);
+        point=Point;
         location.setAccuracy(100);
         mCreateMap.addMarker(new MarkerOptions()
-                .position(point)
+                .position(Point)
                 .title(name)
                 .icon(BitmapDescriptorFactory
                         .defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-        Log.d("Click","Tack");
     }
 
     @Override
@@ -169,9 +233,15 @@ public class CreateActivity extends Activity implements LocationSource, OnMapRea
             case R.id.buttonCreate:
                 name = editName.getText().toString();
                 coment =  editComent.getText().toString();
+
                 Intent intent = new Intent(CreateActivity.this, MapsActivity.class);
+
+                intent.putExtra("checkCreateEdit",checkCreateEdit);
+
+                intent.putExtra("id",id);
                 intent.putExtra("name", name);
                 intent.putExtra("type", type);
+                intent.putExtra("privacy", privacy);
                 intent.putExtra("coment", coment);
                 intent.putExtra("year", year);
                 intent.putExtra("month", month);
@@ -229,20 +299,19 @@ public class CreateActivity extends Activity implements LocationSource, OnMapRea
 
     @Override
     protected Dialog onCreateDialog(int id) {
-      //  switch (id) {
-         //   case 1:
+
                 if(id == 1)
                 return new DatePickerDialog(this, myDateListener, year, month, day);
-         //   case 2:
+
                 if(id == 2)
                 return new TimePickerDialog(this,myTimeListener,hour,minute,true);
-         //   case 3:
+
                 if(id == 3)
                 return new DatePickerDialog(this, myDateListener2, year, month, day);
-          //  case 4:
+
                 if(id == 4)
                 return new TimePickerDialog(this,myTimeListener2,hour,minute,true);
-      //  }
+
         return null;
     }
 

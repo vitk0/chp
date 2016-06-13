@@ -45,12 +45,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.Cursor;
 
-public class MapsActivity extends Activity implements  LocationSource, OnMapReadyCallback, GoogleMap.OnMapLongClickListener , GoogleMap.OnMarkerClickListener {
+public class MapsActivity extends Activity implements  LocationSource, OnMapReadyCallback, GoogleMap.OnMapLongClickListener ,  GoogleMap.OnInfoWindowClickListener {
 
-//    String str="new";
-//    static ResultSet rs;
-//    static PreparedStatement st;
-//    static Connection con;
 
     public static   GoogleMap mMap;
     public static LocationSource.OnLocationChangedListener mListener;
@@ -62,8 +58,10 @@ public class MapsActivity extends Activity implements  LocationSource, OnMapRead
     public static DBHelper dbHelper;
     public static Intent intent2;
 
+    public int id;
     public String name = "";
     public String coment = "";
+    public int privacy;
     public String type = "";
 
     public int year = 0;
@@ -82,46 +80,10 @@ public class MapsActivity extends Activity implements  LocationSource, OnMapRead
     public Double latitude2 = 0.0;
     public Double longitude2 = 0.0;
     public LatLng point2= new LatLng(latitude2,longitude2);
-//    public static JSONObject  getJSONfromURL(String url) {
-//        InputStream is = null;
-//        String result = "";
-//        JSONObject jArray = null;
-//
-//        try {
-//            HttpClient httpclient = new DefaultHttpClient();
-//            HttpPost httppost = new HttpPost(url);
-//            HttpResponse response = httpclient.execute(httppost);
-//            HttpEntity entity = response.getEntity();
-//            is = entity.getContent();
-//
-//        } catch (Exception e) {
-//            Log.e("log_tag", "Error in http connection " + e.toString());
-//        }
-//
-//        // Convert response to string
-//        try {
-//            BufferedReader reader = new BufferedReader(new InputStreamReader(
-//                    is, "UTF-8"), 8);
-//            StringBuilder sb = new StringBuilder();
-//            String line = null;
-//            while ((line = reader.readLine()) != null) {
-//                sb.append(line + "\n");
-//            }
-//            is.close();
-//            result = sb.toString();
-//        } catch (Exception e) {
-//            Log.e("log_tag", "Error converting result " + e.toString());
-//        }
-//
-//        try {
-//            jArray = new JSONObject(result);
-//        } catch (JSONException e) {
-//            Log.e("log_tag", "Error parsing data " + e.toString());
-//        }
-//
-//        return jArray;
-//    }
-
+    public Marker[] arrayMarkers;
+    public Cursor cursor;
+    private Boolean checkCreateEdit = false;
+    private Boolean nonLogin;
 
     public void activate(LocationSource.OnLocationChangedListener listener) {
         mListener = listener;
@@ -135,10 +97,13 @@ public class MapsActivity extends Activity implements  LocationSource, OnMapRead
         MapFragment mapFragment = (MapFragment) getFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        mLocationSource = this;//new MapsActivity();
-
+        mLocationSource = this;
+        nonLogin = getIntent().getBooleanExtra("nonLogin",false);
+        checkCreateEdit = getIntent().getBooleanExtra("checkCreateEdit",checkCreateEdit);
+        id= getIntent().getIntExtra("id",0);
         name = getIntent().getStringExtra("name");
         type = getIntent().getStringExtra("type");
+        privacy =getIntent().getIntExtra("privacy",0);
         coment = getIntent().getStringExtra("coment");
         year = getIntent().getIntExtra("year", year);
         month = getIntent().getIntExtra("month",  month);
@@ -162,39 +127,69 @@ public class MapsActivity extends Activity implements  LocationSource, OnMapRead
         if(name != null) {
             SQLiteDatabase db = dbHelper.getWritableDatabase();
 
-            db.execSQL("insert into events " +
-                    "(name ," +
-                    "type ," +
-                    "year ," +
-                    "month ," +
-                    "day ," +
-                    "hour ," +
-                    "minute ," +
-                    "year2 ," +
-                    "month2 ," +
-                    "day2 ," +
-                    "hour2 ," +
-                    "minute2 ," +
-                    "coordLat ," +
-                    "coordLon ," +
-                    "comment) " +
-                    "values " +
-                    "( '" + name +"',"
-                    + "'" + type +"',"
-                    + year + ","
-                    + month + ","
-                    + day + ","
-                    + hour + ","
-                    + minute + ","
-                    + year2 + ","
-                    + month2 + ","
-                    + day2 + ","
-                    + hour2 + ","
-                    + minute2 + ","
-                    + coordLat  + ","
-                    + coordLon + ","
-                    + "'" + coment + "');");
-
+            if(!checkCreateEdit) {
+                db.execSQL("insert into events " +
+                        "(name ," +
+                        "type ," +
+                        "year ," +
+                        "month ," +
+                        "day ," +
+                        "hour ," +
+                        "minute ," +
+                        "year2 ," +
+                        "month2 ," +
+                        "day2 ," +
+                        "hour2 ," +
+                        "minute2 ," +
+                        "coordLat ," +
+                        "coordLon ," +
+                        "comment ," +
+                        "privacy," +
+                        "coordLat2 ," +
+                        "coordLon2 " + ") " +
+                        "values " +
+                        "( '" + name + "',"
+                        + "'" + type + "',"
+                        + year + ","
+                        + month + ","
+                        + day + ","
+                        + hour + ","
+                        + minute + ","
+                        + year2 + ","
+                        + month2 + ","
+                        + day2 + ","
+                        + hour2 + ","
+                        + minute2 + ","
+                        + coordLat + ","
+                        + coordLon + ","
+                        + "'" + coment + "',"
+                        + privacy + ","
+                        + latitude2 + ","
+                        + longitude2 + ");");
+            }
+            else
+            {
+                db.execSQL("update events set " +
+                        "name = " + "'" + name + "'," +
+                        "type = " + "'" + type + "'," +
+                        "year = " + year + "," +
+                        "month = " +  month + "," +
+                        "day = " + day + ","+
+                        "hour = " + hour + ","+
+                        "minute = " + minute + ","+
+                        "year2 = " + year2 + ","+
+                        "month2 = " + month2 + ","+
+                        "day2 = " + day2 + ","+
+                        "hour2 = " + hour2 + ","+
+                        "minute2 = " + minute2 + ","+
+                        "coordLat = " + coordLat + ","+
+                        "coordLon = " + coordLon + ","+
+                        "comment = " + "'" + coment + "',"+
+                        "privacy = " + privacy + ","+
+                        "coordLat2 = " + latitude2 + ","+
+                        "coordLon2 = " + longitude2 +
+                        " where id = " + id + ";" );
+            }
             dbHelper.close();
         }
 
@@ -204,15 +199,13 @@ public class MapsActivity extends Activity implements  LocationSource, OnMapRead
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        initListeners(mMap);
 
-        mMap.setOnMapLongClickListener(mLocationSource);
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         mMap.setMyLocationEnabled(true);
         myLocationChangeListener = new OnMyLocationChangeListener() {
-
-
             public void onMyLocationChange(Location location) {
                 loc = new LatLng(location.getLatitude(), location.getLongitude());
                 if(mMap != null && !checkNormalPosMap){
@@ -227,35 +220,50 @@ public class MapsActivity extends Activity implements  LocationSource, OnMapRead
         uiSettings.setZoomControlsEnabled(true);
         uiSettings.setIndoorLevelPickerEnabled(true);
 
+
+
         SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor cursor = db.query("events",new String[] {"*"},null,null,null,null,null);
-        while(cursor.moveToNext()){
+        cursor = db.query("events",new String[] {"*"},null,null,null,null,null);
+        int i = 0;
 
-            LatLng point = new LatLng(cursor.getDouble(13),cursor.getDouble(14));
-            mMap.addMarker(new MarkerOptions().position(point).title(cursor.getString(1)));
+        arrayMarkers = new Marker[cursor.getCount()];
+        if(nonLogin) {
+            while (cursor.moveToNext()) {
 
+                LatLng point = new LatLng(cursor.getDouble(13), cursor.getDouble(14));
+                if (cursor.getInt(16) == 0)
+                    arrayMarkers[i] = mMap.addMarker(new MarkerOptions().position(point).title(cursor.getString(1)));
+
+                i += 1;
+
+            }
+        }
+        else
+        {
+            while (cursor.moveToNext()) {
+
+                LatLng point = new LatLng(cursor.getDouble(13), cursor.getDouble(14));
+                    arrayMarkers[i] = mMap.addMarker(new MarkerOptions().position(point).title(cursor.getString(1)));
+                i += 1;
+                }
         }
     }
 
-//        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-//        mMap.moveCamera(CameraUpdateFactory.newLatLng(coordinates));
-        //        mMap.moveCamera(CameraUpdateFactory.newLatLng(location));
-
-
          public void onMapLongClick(LatLng point) {
-            Location location = new Location("LongPressLocationProvider");
-            location.setLatitude(point.latitude);
-            location.setLongitude(point.longitude);
-            location.setAccuracy(100);
-            mMap.addMarker(new MarkerOptions().position(point));
+             if(!nonLogin) {
+                 Location location = new Location("LongPressLocationProvider");
+                 location.setLatitude(point.latitude);
+                 location.setLongitude(point.longitude);
+                 location.setAccuracy(100);
 
-            Log.d("Clic","Tik");
+                 mMap.addMarker(new MarkerOptions().position(point));
 
-             Intent intent2 = new Intent(MapsActivity.this,CreateActivity.class);
-
-             intent2.putExtra("coordLat", point.latitude);
-             intent2.putExtra("coordLon", point.longitude);
-             startActivity(intent2);
+                 Intent intent2 = new Intent(MapsActivity.this, CreateActivity.class);
+                 intent2.putExtra("checkCreateEdit",false);
+                 intent2.putExtra("coordLat", point.latitude);
+                 intent2.putExtra("coordLon", point.longitude);
+                 startActivity(intent2);
+                 }
              }
 
 
@@ -263,7 +271,6 @@ public class MapsActivity extends Activity implements  LocationSource, OnMapRead
 
          protected void onPause() {
         super.onPause();
-//        mLocationSource.onPause();
          }
 
         public void deactivate() {
@@ -272,35 +279,52 @@ public class MapsActivity extends Activity implements  LocationSource, OnMapRead
 
         protected void onResume() {
         super.onResume();
-//        mLocationSource.onResume();
         }
 
+
+    private void initListeners( GoogleMap map ) {
+      //  map.setOnMarkerClickListener(this);
+        map.setOnMapLongClickListener(this);
+        map.setOnInfoWindowClickListener( this );
+      //  map.setOnMapClickListener(this);
+    }
+
     @Override
-    public boolean onMarkerClick(Marker marker) {
+    public void onInfoWindowClick(Marker marker) {
 
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 16.0f));
-
+        int i= 0;
+        for(i = 0 ;i < arrayMarkers.length;i++){
+            if (arrayMarkers[i].equals(marker))
+            break;
+        }
+        cursor.moveToPosition(i);
         Intent intent = new Intent(MapsActivity.this, ReadActivity.class);
-        intent.putExtra("nameE", name);
-        intent.putExtra("typeE", type);
-        intent.putExtra("comentE", coment);
-        intent.putExtra("yearE", year);
-        intent.putExtra("monthE", month);
-        intent.putExtra("dayE", day);
-        intent.putExtra("hourE", hour);
-        intent.putExtra("minuteE", minute);
+        intent.putExtra("nonLoginE",nonLogin);
+        intent.putExtra("idE",id = cursor.getInt(0));
+        intent.putExtra("nameE", name = cursor.getString(1));
+        intent.putExtra("typeE", type = cursor.getString(2));
+        intent.putExtra("privacyE", privacy = cursor.getInt(16));
+        intent.putExtra("comentE", coment = cursor.getString(15));
+        intent.putExtra("yearE", year = cursor.getInt(3));
+        intent.putExtra("monthE", month = cursor.getInt(4));
+        intent.putExtra("dayE", day = cursor.getInt(5));
+        intent.putExtra("hourE", hour = cursor.getInt(6));
+        intent.putExtra("minuteE", minute = cursor.getInt(7) );
 
-        intent.putExtra("year2E", year2);
-        intent.putExtra("month2E", month2);
-        intent.putExtra("day2E", day2);
-        intent.putExtra("hour2E", hour2);
-        intent.putExtra("minute2E", minute2);
+        intent.putExtra("year2E", year2 = cursor.getInt(8));
+        intent.putExtra("month2E", month2 = cursor.getInt(9));
+        intent.putExtra("day2E", day2 = cursor.getInt(10));
+        intent.putExtra("hour2E", hour2 = cursor.getInt(11));
+        intent.putExtra("minute2E", minute2 = cursor.getInt(12));
 
-        intent.putExtra("coord1LatE", coordLat);
-        intent.putExtra("coord1LonE", coordLon);
-        intent.putExtra("coord2LatE", point2.latitude);
-        intent.putExtra("coord2LonE", point2.longitude);
-        return true;
+        intent.putExtra("coord1LatE", coordLat = cursor.getDouble(13));
+        intent.putExtra("coord1LonE", coordLon = cursor.getDouble(14));
+
+        intent.putExtra("coord2LatE", latitude2 = cursor.getDouble(17));
+        intent.putExtra("coord2LonE", longitude2 = cursor.getDouble(18));
+        startActivity(intent);
+
+
     }
 }
 
@@ -308,7 +332,7 @@ class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context) {
 
-        super(context, "DB1", null, 1);
+        super(context, "DB4", null, 1);
     }
 
     @Override
@@ -331,7 +355,10 @@ class DBHelper extends SQLiteOpenHelper {
                 + "minute2 integer ,"
                 + "coordLat real,"
                 + "coordLon real,"
-                + "comment text"
+                + "comment text,"
+                + "privacy integer,"
+                + "coordLat2 real,"
+                + "coordLon2 real"
                 + ");");
     }
 

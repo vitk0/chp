@@ -1,15 +1,24 @@
 package com.home.victor.chp;
 
+import android.app.Activity;
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Switch;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.UiSettings;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.MarkerOptions;
 
-public class ReadActivity extends AppCompatActivity implements View.OnClickListener {
+public class ReadActivity extends Activity implements  OnMapReadyCallback, View.OnClickListener {
     public TextView textViewName;
     public TextView textViewType;
     public TextView textViewData1;
@@ -20,9 +29,11 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     public TextView textViewComent;
     public Button buttonEdit;
 
+    public int id;
     public String name;
     public String type;
     public String coment;
+    public int privacy;
 
     public int year;
     public int month ;
@@ -40,16 +51,31 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
     double coordLon= 0.0;
     public Double latitude2 = 0.0;
     public Double longitude2 = 0.0;
-    public LatLng point2= new LatLng(latitude2,longitude2);
+    public LatLng point;
+    public LatLng point2;
+    private Boolean nonLogin = false;
+    private Switch switchSubscribe;
 
+    public GoogleMap mReadMap;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_read);
 
+        setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
+        MapFragment mapFragment = (MapFragment) getFragmentManager()
+                .findFragmentById(R.id.fragmentMarRead);
+        mapFragment.getMapAsync(this);
+
+
+
+        nonLogin = getIntent().getBooleanExtra("nonLoginE",false);
+        id = getIntent().getIntExtra("idE",0);
         name = getIntent().getStringExtra("nameE");
         type = getIntent().getStringExtra("typeE");
         coment = getIntent().getStringExtra("comentE");
+        privacy =getIntent().getIntExtra("privacyE",0);
         year = getIntent().getIntExtra("yearE", year);
         month = getIntent().getIntExtra("monthE",  month);
         day = getIntent().getIntExtra("dayE", day);
@@ -64,8 +90,11 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
 
         coordLat = getIntent().getDoubleExtra("coord1LatE",  coordLat);
         coordLon  = getIntent().getDoubleExtra("coord1LonE",  coordLon);
-        latitude2 = getIntent().getDoubleExtra("coord2LatE", point2.latitude);
-        longitude2 = getIntent().getDoubleExtra("coord2LonE", point2.longitude);
+        point= new LatLng(coordLat,coordLon);
+
+        latitude2 = getIntent().getDoubleExtra("coord2LatE", 0.0);
+        longitude2 = getIntent().getDoubleExtra("coord2LonE", 0.0);
+        point2= new LatLng(latitude2,longitude2);
 
         textViewName = (TextView) findViewById(R.id.textViewName);
         textViewName.setText(name);
@@ -83,20 +112,66 @@ public class ReadActivity extends AppCompatActivity implements View.OnClickListe
         textViewTime2 = (TextView) findViewById(R.id.textViewTime2);
         textViewTime2.setText("End time " + new StringBuilder().append(hour2).append(":")
                 .append(minute2));
-        textViewPrivate = (TextView) findViewById(R.id.textViewPrivate);
-       // textViewName.setText(name);
+        textViewPrivate = (TextView) findViewById(R.id.textViewPrivacy);
+        if(privacy==1)
+            textViewPrivate.setText("Privacy");
+        else
+            textViewPrivate.setText("No privacy");
         textViewComent = (TextView) findViewById(R.id.textViewComent);
         textViewComent.setText(coment);
 
         buttonEdit = (Button) findViewById(R.id.buttonEdit);
         buttonEdit.setOnClickListener(this);
 
+        if(nonLogin)
+            buttonEdit.setVisibility(View.INVISIBLE);
+
+
+        switchSubscribe = (Switch) findViewById(R.id.switchSubscribe);
+        if(nonLogin)
+            switchSubscribe.setVisibility(View.INVISIBLE);
     }
 
     @Override
     public void onClick(View v) {
         Intent intent = new Intent(this,CreateActivity.class);
-        //startActivity(intent);
 
+        intent.putExtra("checkCreateEditE2",true);
+        intent.putExtra("idE2",id);
+        intent.putExtra("nameE2", name);
+        intent.putExtra("typeE2", type);
+        intent.putExtra("privacyE2", privacy);
+        intent.putExtra("comentE2", coment);
+        intent.putExtra("yearE2", year);
+        intent.putExtra("monthE2", month);
+        intent.putExtra("dayE2", day);
+        intent.putExtra("hourE2", hour);
+        intent.putExtra("minuteE2", minute);
+
+        intent.putExtra("year2E2", year2);
+        intent.putExtra("month2E2", month2);
+        intent.putExtra("day2E2", day2);
+        intent.putExtra("hour2E2", hour2);
+        intent.putExtra("minute2E2", minute2);
+
+        intent.putExtra("coord1LatE2", point.latitude);
+        intent.putExtra("coord1LonE2", point.longitude);
+        intent.putExtra("coord2LatE2", point2.latitude);
+        intent.putExtra("coord2LonE2", point2.longitude);
+        startActivity(intent);
+
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mReadMap = googleMap;
+        mReadMap.animateCamera(CameraUpdateFactory.newLatLngZoom(point, 16.0f));
+        mReadMap.addMarker(new MarkerOptions().position(point).title("Start"));
+        mReadMap.addMarker(new MarkerOptions().position(point2).title("Finish")
+                                .icon(BitmapDescriptorFactory
+                                .defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+        UiSettings uiSettings = mReadMap.getUiSettings();
+        uiSettings.setZoomControlsEnabled(true);
+        uiSettings.setIndoorLevelPickerEnabled(true);
     }
 }

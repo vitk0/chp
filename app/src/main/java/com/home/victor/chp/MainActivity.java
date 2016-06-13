@@ -15,13 +15,18 @@ import com.vk.sdk.api.VKError;
 
 public class MainActivity extends Activity implements View.OnClickListener {
     private Fragment vkFragment;
-    private Button btnAct;
+    private Button buttonLogin;
+    private Button buttonnonLogin;
+
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_layout);
 
-        btnAct = (Button) findViewById(R.id.button);
-        btnAct.setOnClickListener(this);
+        buttonLogin = (Button) findViewById(R.id.buttonLogin);
+        buttonLogin.setOnClickListener(this);
+
+        buttonnonLogin = (Button) findViewById(R.id.buttonnonLogin);
+        buttonnonLogin.setOnClickListener(this);
 
  //       VKSdk.initialize(this);
      //   Fragment vkFragment = getFragmentManager().findFragmentById(R.id.vkFragment);
@@ -29,8 +34,17 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
     public void onClick(View view) {
         Intent intent = new Intent(MainActivity.this, MapsActivity.class);
-        startActivity(intent);
- //       VKSdk.login(vkFragment);
+        switch (view.getId()) {
+            case R.id.buttonLogin:
+                startActivity(intent);
+       //       VKSdk.login(vkFragment);
+                break;
+
+            case R.id.buttonnonLogin:
+                intent.putExtra("nonLogin", true);
+                startActivity(intent);
+                break;
+        }
     }
 
 

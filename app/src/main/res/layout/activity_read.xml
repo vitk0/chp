@@ -27,7 +27,7 @@
         android:id="@+id/textViewType"
         android:layout_below="@+id/textViewName"
         android:layout_alignParentStart="true"
-        android:layout_alignEnd="@+id/textViewPrivate" />
+        android:layout_alignEnd="@+id/textViewPrivacy" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -46,7 +46,7 @@
         android:text="Medium Text"
         android:id="@+id/textViewTime1"
         android:layout_below="@+id/textViewType"
-        android:layout_alignEnd="@+id/textViewType" />
+        android:layout_alignEnd="@+id/buttonEdit" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -71,18 +71,17 @@
         android:layout_width="wrap_content"
         android:layout_height="35dp"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Private"
-        android:id="@+id/textViewPrivate"
+        android:id="@+id/textViewPrivacy"
         android:layout_below="@+id/textViewData2"
         android:layout_alignParentStart="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignEnd="@+id/textViewData2" />
 
     <fragment
         android:layout_width="fill_parent"
         android:layout_height="250dp"
         android:name="com.google.android.gms.maps.MapFragment"
-        android:id="@+id/fragment"
-        android:layout_below="@+id/textViewPrivate"
+        android:id="@+id/fragmentMarRead"
+        android:layout_below="@+id/textViewPrivacy"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true" />
 
@@ -92,16 +91,25 @@
         android:layout_height="wrap_content"
         android:text="Edit"
         android:id="@+id/buttonEdit"
-        android:layout_alignEnd="@+id/textViewType"
-        android:layout_alignParentTop="true" />
+        android:layout_alignParentTop="true"
+        android:layout_alignEnd="@+id/fragmentMarRead" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/textViewComent"
-        android:layout_below="@+id/fragment"
+        android:layout_below="@+id/fragmentMarRead"
         android:layout_alignParentStart="true"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true" />
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Subscribe"
+        android:id="@+id/switchSubscribe"
+        android:layout_alignTop="@+id/textViewPrivacy"
+        android:layout_alignParentEnd="true"
+        android:checked="false" />
 
 </RelativeLayout>
