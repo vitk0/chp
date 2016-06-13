@@ -21,6 +21,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 /*
 import org.apache.http.HttpEntity;
@@ -44,7 +45,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.Cursor;
 
-public class MapsActivity extends Activity implements  LocationSource, OnMapReadyCallback, GoogleMap.OnMapLongClickListener {
+public class MapsActivity extends Activity implements  LocationSource, OnMapReadyCallback, GoogleMap.OnMapLongClickListener , GoogleMap.OnMarkerClickListener {
 
 //    String str="new";
 //    static ResultSet rs;
@@ -61,6 +62,26 @@ public class MapsActivity extends Activity implements  LocationSource, OnMapRead
     public static DBHelper dbHelper;
     public static Intent intent2;
 
+    public String name = "";
+    public String coment = "";
+    public String type = "";
+
+    public int year = 0;
+    public int month = 0 ;
+    public int day = 0;
+    public int hour  = 0;
+    public int minute = 0;
+
+    public int year2 = 0;
+    public int month2 = 0 ;
+    public int day2 = 0;
+    public int hour2 = 0;
+    public int minute2 = 0;
+    double coordLat= 0.0;
+    double coordLon= 0.0;
+    public Double latitude2 = 0.0;
+    public Double longitude2 = 0.0;
+    public LatLng point2= new LatLng(latitude2,longitude2);
 //    public static JSONObject  getJSONfromURL(String url) {
 //        InputStream is = null;
 //        String result = "";
@@ -115,25 +136,68 @@ public class MapsActivity extends Activity implements  LocationSource, OnMapRead
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         mLocationSource = this;//new MapsActivity();
-        dbHelper = new DBHelper(this);
 
-//        try
-//        {
-//            Class.forName("com.mysql.jdbc.Driver");
-//            con=DriverManager.getConnection("jdbc:192.168.0.38","root","toor");
-//            st=con.prepareStatement("select * from event");
-//            rs=st.executeQuery();
-//            while(rs.next())
-//            {
-//                str=rs.getString(2);
-//                Log.d("MySql",str);
-//            }
-//
-//        }
-//        catch(Exception e)
-//        {
-//            Log.d("MySql","Fail");
-//        }
+        name = getIntent().getStringExtra("name");
+        type = getIntent().getStringExtra("type");
+        coment = getIntent().getStringExtra("coment");
+        year = getIntent().getIntExtra("year", year);
+        month = getIntent().getIntExtra("month",  month);
+        day = getIntent().getIntExtra("day", day);
+        hour = getIntent().getIntExtra("hour", hour);
+        minute = getIntent().getIntExtra("minute", minute);
+
+        year2 = getIntent().getIntExtra("year2", year2);
+        month2 = getIntent().getIntExtra("month2",  month2);
+        day2 = getIntent().getIntExtra("day2", day2);
+        hour2 = getIntent().getIntExtra("hour2", hour2);
+        minute2 = getIntent().getIntExtra("minute2", minute2);
+
+        coordLat = getIntent().getDoubleExtra("coord1Lat",  coordLat);
+        coordLon  = getIntent().getDoubleExtra("coord1Lon",  coordLon);
+        latitude2 = getIntent().getDoubleExtra("coord2Lat", point2.latitude);
+        longitude2 = getIntent().getDoubleExtra("coord2Lon", point2.longitude);
+
+
+        dbHelper = new DBHelper(this);
+        if(name != null) {
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
+
+            db.execSQL("insert into events " +
+                    "(name ," +
+                    "type ," +
+                    "year ," +
+                    "month ," +
+                    "day ," +
+                    "hour ," +
+                    "minute ," +
+                    "year2 ," +
+                    "month2 ," +
+                    "day2 ," +
+                    "hour2 ," +
+                    "minute2 ," +
+                    "coordLat ," +
+                    "coordLon ," +
+                    "comment) " +
+                    "values " +
+                    "( '" + name +"',"
+                    + "'" + type +"',"
+                    + year + ","
+                    + month + ","
+                    + day + ","
+                    + hour + ","
+                    + minute + ","
+                    + year2 + ","
+                    + month2 + ","
+                    + day2 + ","
+                    + hour2 + ","
+                    + minute2 + ","
+                    + coordLat  + ","
+                    + coordLon + ","
+                    + "'" + coment + "');");
+
+            dbHelper.close();
+        }
+
     }
 
 
@@ -162,6 +226,15 @@ public class MapsActivity extends Activity implements  LocationSource, OnMapRead
         UiSettings uiSettings = mMap.getUiSettings();
         uiSettings.setZoomControlsEnabled(true);
         uiSettings.setIndoorLevelPickerEnabled(true);
+
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query("events",new String[] {"*"},null,null,null,null,null);
+        while(cursor.moveToNext()){
+
+            LatLng point = new LatLng(cursor.getDouble(13),cursor.getDouble(14));
+            mMap.addMarker(new MarkerOptions().position(point).title(cursor.getString(1)));
+
+        }
     }
 
 //        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
@@ -179,62 +252,9 @@ public class MapsActivity extends Activity implements  LocationSource, OnMapRead
             Log.d("Clic","Tik");
 
              Intent intent2 = new Intent(MapsActivity.this,CreateActivity.class);
-              startActivity(intent2);
 
-             ContentValues cv = new ContentValues();
-
-             // получаем данные из полей ввода
-            // String name = etName.getText().toString();
-             //String email = etEmail.getText().toString();
-
-             // подключаемся к БД
-             SQLiteDatabase db = dbHelper.getWritableDatabase();
-
-                     cv.put("name", "1");
-                     cv.put("type", "2");
-
-                     // вставляем запись и получаем ее ID
-//                     long rowID = db.insert("mytable", null, cv);
-//                     Log.d(LOG_TAG, "row inserted, ID = " + rowID);
-//                     break;
-//                 case R.id.btnRead:
-//                     Log.d(LOG_TAG, "--- Rows in mytable: ---");
-//                     // делаем запрос всех данных из таблицы mytable, получаем Cursor
-                     Cursor c = db.query("events", null, null, null, null, null, null);
-
-                     // ставим позицию курсора на первую строку выборки
-                     // если в выборке нет строк, вернется false
-                     if (c.moveToFirst()) {
-
-                         // определяем номера столбцов по имени в выборке
-                         int idColIndex = c.getColumnIndex("id");
-                         int nameColIndex = c.getColumnIndex("name");
-                         int emailColIndex = c.getColumnIndex("email");
-
-                         do {
-                             // получаем значения по номерам столбцов и пишем все в лог
-                             Log.d("DB",
-                                     "ID = " + c.getInt(idColIndex) +
-                                             ", name = " + c.getString(nameColIndex) +
-                                             ", email = " + c.getString(emailColIndex));
-                             // переход на следующую строку
-                             // а если следующей нет (текущая - последняя), то false - выходим из цикла
-                         } while (c.moveToNext());
-                     } else
-                         Log.d("DB", "0 rows");
-                     c.close();
-//                     break;
-//                 case R.id.btnClear:
-//                     Log.d(LOG_TAG, "--- Clear mytable: ---");
-//                     // удаляем все записи
-//                     int clearCount = db.delete("mytable", null, null);
-//                     Log.d(LOG_TAG, "deleted rows count = " + clearCount);
-//                     break;
-             // закрываем подключение к БД
-             dbHelper.close();
              intent2.putExtra("coordLat", point.latitude);
              intent2.putExtra("coordLon", point.longitude);
-
              startActivity(intent2);
              }
 
@@ -255,27 +275,62 @@ public class MapsActivity extends Activity implements  LocationSource, OnMapRead
 //        mLocationSource.onResume();
         }
 
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 16.0f));
+
+        Intent intent = new Intent(MapsActivity.this, ReadActivity.class);
+        intent.putExtra("nameE", name);
+        intent.putExtra("typeE", type);
+        intent.putExtra("comentE", coment);
+        intent.putExtra("yearE", year);
+        intent.putExtra("monthE", month);
+        intent.putExtra("dayE", day);
+        intent.putExtra("hourE", hour);
+        intent.putExtra("minuteE", minute);
+
+        intent.putExtra("year2E", year2);
+        intent.putExtra("month2E", month2);
+        intent.putExtra("day2E", day2);
+        intent.putExtra("hour2E", hour2);
+        intent.putExtra("minute2E", minute2);
+
+        intent.putExtra("coord1LatE", coordLat);
+        intent.putExtra("coord1LonE", coordLon);
+        intent.putExtra("coord2LatE", point2.latitude);
+        intent.putExtra("coord2LonE", point2.longitude);
+        return true;
+    }
 }
 
 class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context) {
-        // конструктор суперкласса
-        super(context, "myDB", null, 1);
+
+        super(context, "DB1", null, 1);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        Log.d("DB", "--- onCreate database ---");
-        // создаем таблицу с полями
-        db.execSQL("create table events ("
+        Log.e("DB", "--- onCreate database ---");
+
+        db.execSQL("create table if not EXISTS events ("
                 + "id integer primary key autoincrement,"
                 + "name text,"
                 + "type text,"
-                + "timeB data,"
-                + "timeE data,"
-                + "coordLat double,"
-                + "coordLon double,"
+                + "year integer ,"
+                + "month integer ,"
+                + "day integer,"
+                + "hour integer ,"
+                + "minute integer ,"
+                + "year2 integer ,"
+                + "month2 integer ,"
+                + "day2 integer ,"
+                + "hour2 integer ,"
+                + "minute2 integer ,"
+                + "coordLat real,"
+                + "coordLon real,"
                 + "comment text"
                 + ");");
     }
